@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="application-name" content="QR Code Generator">
+
+    <title>QR Code Generator</title>
+
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icons/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+
+    <script src="js/qrjs2.min.js"></script>
+
+    <style>
+        #qrcode {
+            margin-top: 15px;
+        }
+
+        #qrcode > img {
+            max-width: 100%;
+        }
+
+        .container {
+            padding-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container py-5">
+    <div class="card shadow-lg rounded-4 p-4">
+        <h1 class="text-center mb-4">✨ QR Code Generator</h1>
+        <p class="text-center mb-4">Because I hate seeing ads/paywalls on a qr code generator</p>
+
+        <div class="input-group mb-4">
+            <input id="text" type="text" class="form-control form-control-lg rounded-3 shadow-sm"
+                   placeholder="Paste a URL here..." onkeyup="generateQRCode()"
+                   aria-label="URL for QR code">
+        </div>
+
+        <div class="text-center mb-4">
+            <button class="btn btn-outline-dark rounded-pill px-4" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#properties" aria-expanded="false" aria-controls="properties">
+                ⚙️ Show Properties
+            </button>
+        </div>
+
+        <div class="collapse" id="properties">
+            <div class="card card-body border-0 bg-light rounded-3 shadow-sm mb-4">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label for="foregroundColor" class="form-label">🎨 Foreground</label>
+                        <input type="color" id="foregroundColor" class="form-control form-control-color w-100"
+                               value="#000000" title="Choose foreground color" onchange="generateQRCode()">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="backgroundColor" class="form-label">🖼️ Background</label>
+                        <div class="d-flex align-items-center">
+                            <input type="color" id="backgroundColor"
+                                   class="form-control form-control-color me-3"
+                                   value="#ffffff" onchange="generateQRCode()">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="transparentToggle"
+                                       onchange="generateQRCode()">
+                                <label class="form-check-label" for="transparentToggle">Transparent</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="eccLevel" class="form-label">🔒 Error Correction</label>
+                        <select id="eccLevel" class="form-select" onchange="generateQRCode()">
+                            <option value="L">Low (7%)</option>
+                            <option value="M">Medium (15%)</option>
+                            <option value="Q">Quartile (25%)</option>
+                            <option value="H">High (30%)</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="moduleSize" class="form-label">📏 Module Size</label>
+                        <input type="range" id="moduleSize" class="form-range" min="4" max="32" step="1" value="10"
+                               oninput="updateModuleSizeValue(); generateQRCode()">
+                        <div class="d-flex justify-content-between small">
+                            <span>4</span>
+                            <span>32</span>
+                        </div>
+                        <small id="moduleSizeValue" class="form-text text-muted">Module size: 10</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-center my-4">
+            <div id="qrcode" class="bg-white p-3 rounded-4 shadow-sm"></div>
+        </div>
+
+        <h5 id="urlText" class="text-center text-muted mb-4"></h5>
+
+        <div class="d-flex justify-content-center">
+            <button id="downloadButton" class="btn btn-success btn-lg rounded-pill px-5"
+                    type="button" onclick="downloadQRCode()" style="display: none;">
+                Download
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function updateModuleSizeValue() {
+        const moduleSize = document.getElementById('moduleSize').value;
+        document.getElementById('moduleSizeValue').textContent = "Module size: " + moduleSize;
+    }
+</script>
+
+<script>
+    function generateQRCode() {
+        const text = document.getElementById('text').value;
+        const qrElem = document.getElementById('qrcode');
+
+        const foregroundColor = document.getElementById("foregroundColor").value;
+        const backgroundColor = document.getElementById("backgroundColor").value;
+        const isTransparent = document.getElementById("transparentToggle").checked;
+        const eccLevel = document.getElementById('eccLevel').value;
+        const moduleSize = document.getElementById('moduleSize').value;
+
+        qrElem.innerHTML = ""
+        const img = document.createElement("img");
+
+        img.src = QRCode.generatePNG(text, {
+            ecclevel: eccLevel,
+            format: "html",
+            fillcolor: isTransparent ? "#ffffff00" : backgroundColor,
+            textcolor: foregroundColor,
+            margin: 4,
+            modulesize: moduleSize
+        });
+        qrElem.appendChild(img);
+
+        document.getElementById('urlText').innerText = text;
+        document.getElementById('downloadButton').style.display = 'block';
+    }
+</script>
+<script>
+    function downloadQRCode() {
+        const image = document.getElementById('qrcode').querySelector('img');
+        const url = image.src;
+        const link = document.createElement('a');
+        link.download = 'qrcode.png';
+        link.href = url;
+        link.click();
+    }
+</script>
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            const swName = 'service-worker.js';
+            const swPath = new URL(swName, window.location).pathname;
+            navigator.serviceWorker.register(swPath).then((registration) => {
+                console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            }, (err) => {
+                console.log('ServiceWorker registration failed: ', err);
+            });
+        });
+    }
+</script>
+</body>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+</html>
